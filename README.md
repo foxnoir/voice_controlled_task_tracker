@@ -43,6 +43,9 @@
       <a href="#how-it-works">How It Works</a>
     </li>
     <li>
+      <a href="#reminder-system">Reminder System</a>
+    </li>
+    <li>
       <a href="#statistics">Statistics</a>
     </li>
     <li>
@@ -63,6 +66,7 @@ Voice Controlled Task Tracker is a Python-based time tracking system that allows
 - Daily statistics grouped by date
 - Automatic data persistence
 - English speech recognition
+- Audio reminders when no task is active (15 minutes)
 - Graceful shutdown handling
 
 <p align="right"><a href="#readme-top">back to top</a></p>
@@ -161,7 +165,29 @@ The program recognizes the following voice commands (in English):
 3. When you say "End" (or "Task", "Stop"), the current task is ended and saved
 4. All data is automatically saved to `time_tracking_data.json`
 5. Each task session includes a date tag for daily statistics
-6. When you exit (Exit or Ctrl+C), final statistics are automatically displayed
+6. **Reminder System**: If no task is active for 15 minutes, an audio reminder plays to remind you to start tracking
+7. When you exit (Exit or Ctrl+C), final statistics are automatically displayed
+
+**Note:** Reminders only play when no task is currently active. While a task is running, no reminders will be shown, even after hours of tracking.
+
+<p align="right"><a href="#readme-top">back to top</a></p>
+
+## Reminder System
+
+The program includes an intelligent reminder system to help you stay on track:
+
+- **Automatic Reminders**: After 15 minutes of inactivity (no task started or ended), an audio reminder plays
+- **Smart Timing**: Reminders only activate when **no task is currently active**
+- **Reset on Activity**: The reminder timer resets whenever you start or end a task
+- **Audio Notification**: System sounds play on macOS, Linux, and Windows
+
+**Example:**
+- You start tracking "work" at 10:00 AM → No reminders while tracking
+- You stop tracking at 2:00 PM → Reminder timer starts
+- At 2:15 PM → Audio reminder plays: "Reminder: No task tracked recently. Start tracking a task?"
+- You start tracking "pause" at 2:20 PM → Timer resets
+- You stop tracking "pause" at 2:30 PM → Timer starts again
+- At 2:45 PM → Another reminder if no new task started
 
 <p align="right"><a href="#readme-top">back to top</a></p>
 
@@ -221,6 +247,7 @@ TOTAL DAYS                                 1
 - **Date Tracking**: Each task session is tagged with a date (`YYYY-MM-DD`) for daily statistics
 - **Automatic Features**:
   - Ambient noise adjustment for better recognition
+  - Audio reminders (15 minutes of inactivity when no task is active)
   - Graceful shutdown with Ctrl+C
   - Automatic data normalization for backward compatibility
 - **Data Structure**: Each task session includes:

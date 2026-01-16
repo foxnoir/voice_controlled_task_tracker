@@ -31,10 +31,13 @@ import os
 from datetime import datetime, timedelta
 from collections import defaultdict
 import signal
+import threading
+import subprocess
+import platform
 
 
 class VoiceTimeTracker:
-    def __init__(self):
+    def __init__(self, reminder_interval_minutes=15):
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
         self.tasks = []  # List of task sessions
@@ -43,6 +46,14 @@ class VoiceTimeTracker:
         self.running = True
         self.data_file = "time_tracking_data.json"
 
+        # Reminder system - only when no task is active
+        self.reminder_interval = timedelta(minutes=reminder_interval_minutes)
+        self.last_task_activity = (
+            datetime.now()
+        )  # Last time a task was started or ended
+        self.reminder_timer = None
+        self.reminder_thread = None
+
         # Load existing data
         self.load_data()
 
@@ -50,7 +61,13 @@ class VoiceTimeTracker:
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
 
+        # Start reminder thread
+        self.start_reminder_thread()
+
         print("Voice Time Tracker initialized!")
+        print(
+            f"Reminder: Audio reminder after {reminder_interval_minutes} minutes when no task is active"
+        )
         print("Commands:")
         print("  - 'Start tracking [task name]' or 'Start [task name] tracking'")
         print("  - 'End', 'Task', or 'Stop' to stop current task")
@@ -58,6 +75,71 @@ class VoiceTimeTracker:
         print("  - 'Clear statistics' to delete all tracked data")
         print("  - 'Exit' or Ctrl+C to quit and show final statistics")
         print("\nListening for commands...\n")
+
+    def play_reminder_sound(self):
+        """Play a reminder sound"""
+        try:
+            if platform.system() == "Darwin":  # macOS
+                # Play a system sound on macOS using afplay
+                subprocess.run(
+                    ["afplay", "/System/Library/Sounds/Glass.aiff"],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            elif platform.system() == "Linux":
+                # Play a beep on Linux
+                subprocess.run(
+                    ["paplay", "/usr/share/sounds/freedesktop/stereo/message.oga"],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            else:
+                # Windows - use winsound
+                try:
+                    import winsound
+
+                    winsound.Beep(1000, 500)  # 1000 Hz for 500 ms
+                except ImportError:
+                    # Fallback: print bell character
+                    print("\a", end="", flush=True)
+        except Exception:
+            # If sound playback fails, just print a visual reminder
+            print("\a", end="", flush=True)
+
+    def start_reminder_thread(self):
+        """Start background thread for reminder notifications"""
+
+        def reminder_loop():
+            while self.running:
+                try:
+                    # Only check for reminders if NO task is currently active
+                    if not self.current_task:
+                        # Calculate time since last task activity (start or end)
+                        time_since_activity = datetime.now() - self.last_task_activity
+
+                        # Check if reminder interval has passed
+                        if time_since_activity >= self.reminder_interval:
+                            print(
+                                "\n🔔 Reminder: No task tracked recently. Start tracking a task?\n"
+                            )
+                            self.play_reminder_sound()
+                            # Reset activity time after reminder to avoid repeated sounds
+                            self.last_task_activity = datetime.now()
+
+                    # Sleep for 1 minute before checking again
+                    threading.Event().wait(60)
+                except Exception:
+                    # Continue running even if there's an error
+                    continue
+
+        self.reminder_thread = threading.Thread(target=reminder_loop, daemon=True)
+        self.reminder_thread.start()
+
+    def update_task_activity(self):
+        """Update the last task activity timestamp (when task starts or ends)"""
+        self.last_task_activity = datetime.now()
 
     def load_data(self):
         """Load existing tracking data from JSON file"""
@@ -199,6 +281,7 @@ class VoiceTimeTracker:
 
         self.current_task = task_name
         self.current_task_start = datetime.now()
+        self.update_task_activity()  # Update task activity time when task starts
         print(f"\n✓ Started tracking: {task_name}")
         print(f"  Started at: {self.current_task_start.strftime('%H:%M:%S')}\n")
 
@@ -224,6 +307,7 @@ class VoiceTimeTracker:
 
         self.tasks.append(task_session)
         self.save_data()
+        self.update_task_activity()  # Update task activity time when task ends
 
         print(f"\n✓ Ended tracking: {self.current_task}")
         print(f"  Duration: {self.format_duration(duration)}")
