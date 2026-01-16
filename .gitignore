@@ -207,7 +207,7 @@ marimo/_lsp/
 __marimo__/
 
 # Voice Time Tracker - User data
-time_tracking_data.json
+tracked_tasks.json
 
 # macOS - Finder/Spotlight files
 .DS_Store

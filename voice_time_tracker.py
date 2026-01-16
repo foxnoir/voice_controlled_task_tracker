@@ -28,23 +28,30 @@ except ImportError:
 
 import json
 import os
+import signal
+import subprocess
+import threading
+import platform
 from datetime import datetime, timedelta
 from collections import defaultdict
-import signal
-import threading
-import subprocess
-import platform
+
+# Constants
+DEFAULT_REMINDER_INTERVAL_MINUTES = 15
+DATA_FILE = "tracked_tasks.json"
+LISTEN_TIMEOUT = 8
+PHRASE_TIME_LIMIT = 20
+REMINDER_CHECK_INTERVAL = 60  # seconds
 
 
 class VoiceTimeTracker:
-    def __init__(self, reminder_interval_minutes=15):
+    def __init__(self, reminder_interval_minutes=DEFAULT_REMINDER_INTERVAL_MINUTES):
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
         self.tasks = []  # List of task sessions
         self.current_task = None
         self.current_task_start = None
         self.running = True
-        self.data_file = "time_tracking_data.json"
+        self.data_file = DATA_FILE
 
         # Reminder system - only when no task is active
         self.reminder_interval = timedelta(minutes=reminder_interval_minutes)
@@ -128,8 +135,8 @@ class VoiceTimeTracker:
                             # Reset activity time after reminder to avoid repeated sounds
                             self.last_task_activity = datetime.now()
 
-                    # Sleep for 1 minute before checking again
-                    threading.Event().wait(60)
+                    # Sleep before checking again
+                    threading.Event().wait(REMINDER_CHECK_INTERVAL)
                 except Exception:
                     # Continue running even if there's an error
                     continue
@@ -140,6 +147,20 @@ class VoiceTimeTracker:
     def update_task_activity(self):
         """Update the last task activity timestamp (when task starts or ends)"""
         self.last_task_activity = datetime.now()
+
+    def _extract_task_name(self, text_lower: str) -> str:
+        """Extract task name from various command formats"""
+        if "start tracking" in text_lower:
+            return text_lower.replace("start tracking", "").strip()
+
+        # Handle "start [task] tracking"
+        if "tracking" in text_lower:
+            parts = text_lower.split("tracking")
+            if len(parts) > 1:
+                return parts[0].replace("start", "").strip()
+
+        # Fallback: remove both words
+        return text_lower.replace("start", "").replace("tracking", "").strip()
 
     def load_data(self):
         """Load existing tracking data from JSON file"""
@@ -179,8 +200,9 @@ class VoiceTimeTracker:
                 # Adjust for ambient noise
                 self.recognizer.adjust_for_ambient_noise(source, duration=0.5)
                 print("Listening... (speak now)")
-                # Increased timeout and phrase_time_limit for longer commands
-                audio = self.recognizer.listen(source, timeout=8, phrase_time_limit=20)
+                audio = self.recognizer.listen(
+                    source, timeout=LISTEN_TIMEOUT, phrase_time_limit=PHRASE_TIME_LIMIT
+                )
 
             # Try to recognize speech - English only
             try:
@@ -211,23 +233,7 @@ class VoiceTimeTracker:
         # Start tracking commands - flexible matching
         # Accept: "start tracking [task]", "start [task] tracking", "track [task]"
         if "start" in text_lower and "tracking" in text_lower:
-            # Extract task name
-            if "start tracking" in text_lower:
-                task_name = text_lower.replace("start tracking", "").strip()
-            elif "start" in text_lower and "tracking" in text_lower:
-                # Handle "start [task] tracking"
-                parts = text_lower.split("tracking")
-                if len(parts) > 1:
-                    task_name = parts[0].replace("start", "").strip()
-                else:
-                    task_name = (
-                        text_lower.replace("start", "").replace("tracking", "").strip()
-                    )
-            else:
-                task_name = (
-                    text_lower.replace("start", "").replace("tracking", "").strip()
-                )
-
+            task_name = self._extract_task_name(text_lower)
             if task_name:
                 self.start_task(task_name)
             else:
@@ -293,12 +299,12 @@ class VoiceTimeTracker:
 
         end_time = datetime.now()
         duration = end_time - self.current_task_start
-        # Get date in YYYY-MM-DD format for daily statistics
-        date_str = end_time.strftime("%Y-%m-%d")
 
         task_session = {
             "task": self.current_task,
-            "date": date_str,
+            "date": end_time.strftime(
+                "%Y-%m-%d"
+            ),  # YYYY-MM-DD format for daily statistics
             "start": self.current_task_start.isoformat(),
             "end": end_time.isoformat(),
             "duration_seconds": int(duration.total_seconds()),

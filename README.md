@@ -15,7 +15,7 @@
   <p align="center">
     A voice-based time tracking system for Python
     <br />
-    <a href="https://github.com/foxnoir/voice_controlled_task_tracker"><strong>Explore the project »</strong></a>
+    <a href="https://github.com/foxnoir/voice_controlled_tasks_tracker"><strong>Explore the project »</strong></a>
     <br />
   </p>
 </div>
@@ -163,7 +163,7 @@ The program recognizes the following voice commands (in English):
 1. The program runs continuously and listens for voice commands
 2. When you say "Start tracking [name]", time tracking begins
 3. When you say "End" (or "Task", "Stop"), the current task is ended and saved
-4. All data is automatically saved to `time_tracking_data.json`
+4. All data is automatically saved to `tracked_tasks.json`
 5. Each task session includes a date tag for daily statistics
 6. **Reminder System**: If no task is active for 15 minutes, an audio reminder plays to remind you to start tracking
 7. When you exit (Exit or Ctrl+C), final statistics are automatically displayed
@@ -243,7 +243,7 @@ TOTAL DAYS                                 1
 
 - **Speech Recognition**: Uses Google Speech Recognition API (free, requires internet connection)
 - **Language**: English (`en-US`)
-- **Data Storage**: JSON format in `time_tracking_data.json`
+- **Data Storage**: JSON format in `tracked_tasks.json`
 - **Date Tracking**: Each task session is tagged with a date (`YYYY-MM-DD`) for daily statistics
 - **Automatic Features**:
   - Ambient noise adjustment for better recognition
