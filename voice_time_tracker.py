@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Voice-based Time Tracking System
+Voice-based Tasks Tracking System
 Start tasks with voice commands like "Start tracking work" or "Start tracking Pause"
 End tasks with "end" or "task end"
 Automatically generates statistics when program exits
