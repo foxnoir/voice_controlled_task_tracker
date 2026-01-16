@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Voice Time Tracker - User data
+time_tracking_data.json
+
+# macOS - Finder/Spotlight files
+.DS_Store
+.AppleDouble
+.LSOverride
+.Icon
+Icon
+Icon?
+*Icon
+
+# macOS - Thumbnails
+._*
+
+# macOS - Directories
+.Spotlight-V100
+.Trashes
