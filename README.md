@@ -15,7 +15,7 @@
   <p align="center">
     A voice-based time tracking system for Python
     <br />
-    <a href="https://github.com/foxnoir/voice_controlled_tasks_tracker"><strong>Explore the project »</strong></a>
+    <a href="https://github.com/foxnoir/voice_controlled_task_tracker"><strong>Explore the project »</strong></a>
     <br />
   </p>
 </div>
