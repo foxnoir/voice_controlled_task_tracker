@@ -79,6 +79,8 @@ class VoiceTimeTracker:
         print("  - 'Start tracking [task name]' or 'Start [task name] tracking'")
         print("  - 'End', 'Task', or 'Stop' to stop current task")
         print("  - 'Show statistics' (or 'stats') to see current stats")
+        print("  - 'Delete last task' to delete the most recent task")
+        print("  - 'Delete task [task name]' to delete last session of a task")
         print("  - 'Clear statistics' to delete all tracked data")
         print("  - 'Exit' or Ctrl+C to quit and show final statistics")
         print("\nListening for commands...\n")
@@ -256,6 +258,29 @@ class VoiceTimeTracker:
         ):
             self.end_task()
 
+        # Delete last task command
+        elif "delete" in text_lower and "last" in text_lower and "task" in text_lower:
+            self.delete_last_task()
+
+        # Delete specific task command: "delete task [taskname]"
+        elif "delete" in text_lower and "task" in text_lower:
+            # Extract task name after "delete task"
+            if "delete task" in text_lower:
+                task_name = text_lower.replace("delete task", "").strip()
+                if task_name:
+                    self.delete_task(task_name)
+                else:
+                    print("Please specify a task name. Example: 'Delete task work'")
+            else:
+                # Handle "delete [taskname] task" format
+                parts = text_lower.split("task")
+                if len(parts) > 1:
+                    task_name = parts[0].replace("delete", "").strip()
+                    if task_name:
+                        self.delete_task(task_name)
+                    else:
+                        print("Please specify a task name. Example: 'Delete task work'")
+
         # Clear statistics command
         elif "clear" in text_lower and "statistics" in text_lower:
             self.clear_statistics()
@@ -276,7 +301,7 @@ class VoiceTimeTracker:
         else:
             print(f"Unknown command: {text}")
             print(
-                "Try: 'Start tracking [task name]', 'End'/'Task', 'Show statistics', or 'Exit'"
+                "Try: 'Start tracking [task name]', 'End'/'Task', 'Show statistics', 'Delete last task', or 'Exit'"
             )
 
     def start_task(self, task_name):
@@ -407,6 +432,40 @@ class VoiceTimeTracker:
         print(f"{'TOTAL SESSIONS':28s} {len(self.tasks):15d}")
         print(f"{'TOTAL DAYS':28s} {len(sorted_dates):15d}")
         print("=" * 70 + "\n")
+
+    def delete_last_task(self):
+        """Delete the last tracked task session"""
+        if not self.tasks:
+            print("\n✗ No tasks to delete.\n")
+            return
+
+        deleted_task = self.tasks.pop()
+        self.save_data()
+
+        print(f"\n✓ Deleted last task: {deleted_task['task']}")
+        print(f"  Duration: {deleted_task.get('duration_formatted', 'N/A')}")
+        print(f"  Date: {deleted_task.get('date', 'N/A')}\n")
+
+    def delete_task(self, task_name):
+        """Delete the last session of a specific task"""
+        if not self.tasks:
+            print("\n✗ No tasks to delete.\n")
+            return
+
+        # Find the last occurrence of the task (most recent)
+        task_found = False
+        for i in range(len(self.tasks) - 1, -1, -1):
+            if self.tasks[i]["task"].lower() == task_name.lower():
+                deleted_task = self.tasks.pop(i)
+                self.save_data()
+                task_found = True
+                print(f"\n✓ Deleted task: {deleted_task['task']}")
+                print(f"  Duration: {deleted_task.get('duration_formatted', 'N/A')}")
+                print(f"  Date: {deleted_task.get('date', 'N/A')}\n")
+                break
+
+        if not task_found:
+            print(f"\n✗ Task '{task_name}' not found.\n")
 
     def clear_statistics(self):
         """Clear all statistics by deleting the data file"""
