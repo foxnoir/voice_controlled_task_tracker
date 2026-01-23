@@ -199,7 +199,7 @@ The statistics show:
   - Percentage distribution
   - Daily total time
   - Number of sessions per day
-- **Overall Statistics**: 
+- **Overall Statistics**:
   - Total time across all days
   - Total number of sessions
   - Total number of days tracked
@@ -267,4 +267,4 @@ TOTAL DAYS                                 1
 [twitter-shield]: https://img.shields.io/badge/Twitter-%231DA1F2.svg?style=for-the-badge&logo=Twitter&logoColor=white
 [twitter-url]: https://twitter.com/_foxnoir_?lang=de
 [instagram-shield]: https://img.shields.io/badge/Instagram-%23E4405F.svg?style=for-the-badge&logo=Instagram&logoColor=white
-[instagram-url]: https://www.instagram.com/_foxnoir_/
+[instagram-url]: https://www.instagram.com/codeincouture/
